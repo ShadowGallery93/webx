@@ -1,50 +1,45 @@
-import sys
 import requests
 from bs4 import BeautifulSoup
+import sys
 
 class WebBrowser:
     def __init__(self, url):
         self.url = url
         self.session = requests.Session()
-    
-    def navigate(self, url=None):
-        if url is None:
-            url = self.url
-        response = self.session.get(url)
-        soup = BeautifulSoup(response.content, 'html.parser')
-        tree = soup.find('tree').encode()
-        table = soup.find('table').encode()
-        print("Tree:", tree)
-        print("Table:", table)
-    
+        self.features = []
+
     def list(self):
         response = self.session.get(self.url)
         soup = BeautifulSoup(response.content, 'html.parser')
-        features = []
-        for element in soup.find_all('a'):
-            if element.has_attr('href'):
-                href = element['href']
-                text = element.text
-                features.append((href, text))
+        self.features = []
+        for link in soup.find_all('a'):
+            href = link.get('href')
+            text = link.text
+            self.features.append((href, text))
         print("Features:")
-        for feature in features:
-            print(feature[0], "|", feature[1])
-    
+        for i, feature in enumerate(self.features):
+            print(i, "|", feature[1])
+
     def source_code(self):
         response = self.session.get(self.url)
         soup = BeautifulSoup(response.content, 'html.parser')
         print("Source Code:")
         print(soup.prettify())
-    
+
     def exit(self):
         sys.exit()
+
+    def navigate(self, new_url):
+        self.url = new_url
+
+    def select(self, index):
+        self.navigate(self.features[index][0])
 
 def main():
     url = input("Enter URL: ")
     browser = WebBrowser(url)
     while True:
-        command = input("Enter a command (l for list, s for source code, q to quit, U to navigate to a new URL): 
-").lower()
+        command = input("Enter a command (l for list, s for source code, q to quit, u to navigate to a new URL, n to select a link by its number): ")
         if command == 'l':
             browser.list()
         elif command == 's':
@@ -54,6 +49,9 @@ def main():
         elif command == 'u':
             new_url = input("Enter new URL: ")
             browser.navigate(new_url)
+        elif command == 'n':
+            index = int(input("Enter the number of the link: "))
+            browser.select(index)
         else:
             print("Invalid command")
 
